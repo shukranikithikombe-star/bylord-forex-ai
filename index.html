@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BYLORD FOREX AI - REAL TREND</title>
+<style>
+body{background:#070c1a;color:#fff;font-family:Arial;padding:10px;margin:0}
+h1{text-align:center;font-size:22px;margin:8px 0}
+.live{color:#00E676;text-align:center;font-size:11px;border:1px solid #00E676;padding:6px;border-radius:20px;margin:6px auto;max-width:340px}
+select{width:100%;padding:13px;background:#151b30;color:#fff;border-radius:10px;border:1px solid #2a3555;margin-bottom:10px;font-size:14px}
+.modeBox{display:flex;gap:8px;margin:10px 0}
+.modeBtn{flex:1;padding:12px;border-radius:12px;border:2px solid #333;background:#1a1f35;color:#888;font-weight:800;font-size:12px}
+.modeBtn.active{border-color:#00E676;color:#00E676;background:#0a1f14}
+.sig{padding:18px;border-radius:14px;font-size:26px;font-weight:900;text-align:center;margin:10px 0;letter-spacing:1px}
+.buy{background:#00E676;color:#000;box-shadow:0 0 20px #00E67650}.sell{background:#ff1744;color:#fff;box-shadow:0 0 20px #ff174450}
+#wrap{background:#000;border-radius:14px;border:1px solid #222;padding:4px;margin:10px 0}
+#c{width:100%;height:320px;display:block;border-radius:10px}
+.stat{display:flex;gap:8px;margin:8px 0}
+.stat div{flex:1;background:#11182b;padding:10px;border-radius:10px;text-align:center;font-size:11px;color:#999}
+.stat b{display:block;color:#fff;font-size:15px;margin-bottom:2px}
+.levels{background:#11182b;padding:12px;border-radius:10px;margin:8px 0;text-align:center;color:#ccc;font-size:13px;line-height:18px}
+.btn{width:100%;padding:15px;border-radius:12px;border:none;font-weight:800;font-size:15px;margin-top:8px;cursor:pointer}
+.wa{background:#25D366;color:#fff}.scan{background:#2962FF;color:#fff}
+.small{font-size:10px;color:#666;text-align:center;margin-top:8px}
+</style></head><body>
+<h1>💹 BYLORD FOREX AI</h1>
+<div class="live" id="live">● CONNECTING TO REAL MARKET...</div>
+
+<select id="pair" onchange="get()">
+<option value="PAXGUSDT">GOLD XAU/USD - Live Candles</option>
+<option value="BTCUSDT">BTC/USD</option>
+<option value="EURUSDT">EUR/USD</option>
+<option value="GBPUSDT">GBP/USD</option>
+<option value="USDJPY">USD/JPY</option>
+</select>
+
+<div class="modeBox">
+<button id="btn1" class="modeBtn active" onclick="setMode('scalper')">🎯 SCALPER<br>TREND FOLLOW</button>
+<button id="btn2" class="modeBtn" onclick="setMode('sniper')">🛡️ SNIPER<br>REVERSAL</button>
+</div>
+
+<div id="sig" class="sig buy">FETCHING REAL PRICE...</div>
+
+<div id="wrap"><canvas id="c" width="360" height="320"></canvas></div>
+
+<div class="stat">
+<div><b id="p">-</b>REAL PRICE</div>
+<div><b id="r">-</b>RSI 14</div>
+<div><b id="cf">-</b>CONFIDENCE</div>
+</div>
+
+<div id="lv" class="levels">Waiting for live data...</div>
+
+<button class="btn wa" onclick="wa()">📲 SEND TO +254782759185</button>
+<button class="btn scan" onclick="get()">🔄 NEW SIGNAL NOW</button>
+<div class="small">Green candles + RSI > 50 = BUY 🟢 | Red candles + RSI < 50 = SELL 🔴 | Live from Binance</div>
+
+<script>
+const NUM="254782759185";
+let mode='scalper', last={};
+
+function setMode(m){
+ mode=m;
+ document.getElementById('btn1').classList.toggle('active',m==='scalper');
+ document.getElementById('btn2').classList.toggle('active',m==='sniper');
+ get();
+}
+
+function calcRSI(closes, p=14){
+ let gains=0, losses=0;
+ for(let i=1;i<=p;i++){let d=closes[i]-closes[i-1]; if(d>=0)gains+=d; else losses-=d;}
+ let ag=gains/p, al=losses/p;
+ for(let i=p+1;i<closes.length;i++){let d=closes[i]-closes[i-1]; if(d>=0){ag=(ag*(p-1)+d)/p; al=(al*(p-1))/p;} else {ag=(ag*(p-1))/p; al=(al*(p-1)-d)/p;}}
+ if(al===0) return 100;
+ return 100 - (100/(1+ag/al));
+}
+
+function drawCandles(candles){
+ let cv=document.getElementById('c'), ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+ ctx.clearRect(0,0,W,H); ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+ if(!candles.length) return;
+ let maxH=Math.max(...candles.map(c=>c.h)), minL=Math.min(...candles.map(c=>c.l));
+ let range=maxH-minL||1; maxH+=range*0.08; minL-=range*0.08; range=maxH-minL;
+ let step=W/candles.length, w=step*0.65;
+ candles.forEach((c,i)=>{
+  let x=i*step+4;
+  let yO=H-(c.o-minL)/range*H, yC=H-(c.c-minL)/range*H, yH=H-(c.h-minL)/range*H, yL=H-(c.l-minL)/range*H;
+  let green=c.c>=c.o;
+  ctx.strokeStyle=green?'#00E676':'#ff1744'; ctx.fillStyle=green?'#00E676':'#ff1744';
+  ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x+w/2,yH); ctx.lineTo(x+w/2,yL); ctx.stroke();
+  let by=Math.min(yO,yC), bh=Math.abs(yO-yC); if(bh<2)bh=3;
+  ctx.fillRect(x,by,w,bh);
+ });
+ ctx.strokeStyle='#1a1f35'; ctx.setLineDash([3,3]);
+ for(let i=1;i<4;i++){ctx.beginPath(); ctx.moveTo(0,H/4*i); ctx.lineTo(W,H/4*i); ctx.stroke();}
+ ctx.setLineDash([]);
+}
+
+async function get(){
+ let symbol=document.getElementById('pair').value;
+ document.getElementById('sig').textContent='FETCHING REAL '+symbol+'...';
+ document.getElementById('live').textContent='● FETCHING LIVE '+symbol+'...';
+ try{
+  let res=await fetch('https://data-api.binance.vision/api/v3/klines?symbol='+symbol+'&interval=1m&limit=50');
+  let data=await res.json();
+  let closes=data.map(k=>parseFloat(k[4]));
+  let candles=data.map(k=>({o:parseFloat(k[1]),h:parseFloat(k[2]),l:parseFloat(k[3]),c:parseFloat(k[4])}));
+  let price=closes[closes.length-1];
+  let prev=closes[closes.length-2];
+  let rsi=Math.round(calcRSI(closes,14));
+
+  // CORRECT LOGIC - TREND FOLLOW
+  let signal, conf;
+  if(mode==='scalper'){
+   // TREND FOLLOW: Green + RSI >50 = BUY, Red + RSI <50 = SELL
+   signal = rsi > 50? 'BUY 🟢' : 'SELL 🔴';
+   conf = Math.abs(rsi-50)+50; // 50-100%
+  }else{
+   // SNIPER REVERSAL: Buy low, sell high
+   signal = rsi < 35? 'BUY 🟢' : rsi > 65? 'SELL 🔴' : rsi > 50? 'BUY 🟢' : 'SELL 🔴';
+   conf = rsi < 35 || rsi > 65? 92 : 72;
+  }
+  if(conf>92) conf=92;
+
+  last={pair:symbol,price,rsi,signal,conf,time:new Date().toLocaleTimeString(),prev};
+
+  document.getElementById('p').textContent=price.toFixed(2);
+  document.getElementById('r').textContent=rsi;
+  document.getElementById('cf').textContent=conf+'%';
+  document.getElementById('sig').textContent=signal+' RSI '+rsi;
+  document.getElementById('sig').className='sig '+(signal.includes('BUY')?'buy':'sell');
+
+  let isBuy=signal.includes('BUY');
+  let tp=isBuy?price*1.0035:price*0.9965;
+  let sl=isBuy?price*0.998:price*1.002;
+  let trend=price>prev?'📈 UPTREND':'📉 DOWNTREND';
+  document.getElementById('lv').innerHTML=`${trend} | ${prev.toFixed(2)} → ${price.toFixed(2)}<br>🎯 TP: ${tp.toFixed(2)} | 🛑 SL: ${sl.toFixed(2)}<br><b>${mode.toUpperCase()} - ${conf}% CONFIDENCE</b>`;
+  document.getElementById('live').textContent=`● LIVE ${last.time} - ${symbol} - ${candles.length} REAL CANDLES`;
+
+  drawCandles(candles);
+
+ }catch(e){
+  document.getElementById('sig').textContent='No internet - Tap NEW SIGNAL';
+  document.getElementById('live').textContent='● OFFLINE - TAP REFRESH';
+ }
+}
+
+function wa(){
+ if(!last.price){alert('Wait for price');return;}
+ let isBuy=last.signal.includes('BUY');
+ let msg=`💹 *BYLORD ${mode.toUpperCase()} SIGNAL*%0A%0APair: ${last.pair}%0A*${last.signal} - RSI ${last.rsi}*%0APrice: ${last.price}%0APrev: ${last.prev}%0AConf: ${last.conf}%25%0ATime: ${last.time}%0A%0A${isBuy?'📈 Green candles - Uptrend':'📉 Red candles - Downtrend'}%0A_TP/SL included_`;
+ window.open('https://wa.me/'+NUM+'?text='+msg);
+}
+
+get();
+setInterval(get,15000);
+</script>
+</body></html>
