@@ -1,0 +1,13 @@
+<!-- just replace the get() signal part -->
+let isBuy=rsi>50;
+let signal='';
+if(mode=='barchart'){isBuy=bTrend.includes('BUY');signal='BARCHART '+bTrend+(isBuy?' 🟢':' 🔴');}
+else if(mode=='sniper'){
+  if(rsi<40){signal='SNIPER BUY REVERSAL 🟢';isBuy=true;}
+  else if(rsi>60){signal='SNIPER SELL REVERSAL 🔴';isBuy=false;}
+  else if(pr>sma20 && rsi>50){signal='SNIPER BUY TREND 🟢';isBuy=true;} // FIX - your case RSI 57
+  else if(pr<sma20 && rsi<50){signal='SNIPER SELL TREND 🔴';isBuy=false;}
+  else{signal='WAIT NO REVERSAL 🟡';}
+}else{
+  signal=isBuy?'BUY 🟢':'SELL 🔴';
+}
