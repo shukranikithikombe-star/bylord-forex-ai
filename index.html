@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BYLORD OFFLINE</title><style>body{background:#0a122c;color:#fff;font-family:Arial;margin:0;padding:10px}.top{display:flex;gap:6px}.top button{flex:1;padding:10px;border-radius:20px;border:2px solid #333;background:#141d38;color:#888;font-weight:900;font-size:10px}.top button.active{border-color:#00E676;color:#00E676;background:#0f2218}#wrap{background:#000;border-radius:18px;border:1px solid #222;padding:6px;margin:8px 0}#c{width:100%;height:380px;display:block}.row{display:flex;gap:6px}.row div{flex:1;background:#141b33;padding:10px;border-radius:12px;text-align:center}.row b{font-size:13px;display:block}.row span{font-size:8px;color:#888}.demo{background:#101a33;border:1px solid #00E676;padding:12px;border-radius:12px}.trade{font-size:11px;padding:7px;background:#0d152e;border-left:3px solid #00E676;margin:4px 0;border-radius:6px}.btn{width:100%;padding:14px;border-radius:12px;border:none;font-weight:900;margin-top:6px;background:#2a64ff;color:#fff}</style></head><body>
+<div class="top"><button class="active">SCALPER</button><button>SNIPER</button><button>BARCHART</button></div>
+<div id="sig" style="padding:16px;border-radius:16px;text-align:center;font-weight:900;font-size:20px;margin:8px 0;background:#00E676;color:#000">BUY 🟢 RSI 58</div>
+<div id="wrap"><canvas id="c" width="360" height="380"></canvas></div>
+<div class="row"><div><b id="p">4471.63</b><span>PRICE</span></div><div><b id="r">58</b><span>RSI</span></div><div><b id="cf">88%</b><span>CONF</span></div><div><b id="bal">$10000</b><span>DEMO BAL</span></div></div>
+<div class="demo"><b>💰 DEMO: $<span id="dBal">10000</span> | P/L: $<span id="dPL">0</span></b><div id="trades" style="max-height:160px;overflow:auto;margin-top:6px"></div></div>
+<div id="lv" style="background:#141b33;padding:10px;border-radius:12px;font-size:11px;margin:8px 0">GREEN = Profit | RED = Loss — Auto like your screenshot</div>
+<button class="btn" onclick="start()">🔄 START PROFITABLE DEMO NOW</button>
+<script>
+let demo={bal:10000,pl:0,trades:[],pos:null},price=4471.63,ca=[];
+function genCandles(){ca=[];let b=4499;for(let i=0;i<60;i++){let o=b+(Math.random()-0.5)*2,
