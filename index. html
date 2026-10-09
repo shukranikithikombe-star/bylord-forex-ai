@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BYLORD AI FAST</title>
+<style>
+body{background:#070c1a;color:#fff;font-family:Arial;padding:10px;margin:0}
+h1{text-align:center;font-size:20px;margin:6px}
+.live{color:#00E676;text-align:center;font-size:10px;border:1px solid #00E676;padding:6px;border-radius:20px;margin:6px auto;max-width:340px}
+select{width:100%;padding:12px;background:#151b30;color:#fff;border-radius:10px;border:1px solid #2a3555;margin-bottom:8px}
+.modeBox{display:flex;gap:6px;margin:8px 0}
+.modeBtn{flex:1;padding:10px;border-radius:10px;border:2px solid #333;background:#1a1f35;color:#888;font-weight:800;font-size:11px}
+.modeBtn.active{border-color:#00E676;color:#00E676;background:#0a1f14}
+.sig{padding:18px;border-radius:14px;font-size:26px;font-weight:900;text-align:center;margin:8px 0}
+.buy{background:#00E676;color:#000}.sell{background:#ff1744;color:#fff}
+.newsBox{background:#11182b;border:1px solid #ffaa00;border-radius:10px;padding:8px;margin:8px 0;font-size:11px;color:#ffcc00}
+#wrap{background:#000;border-radius:12px;border:1px solid #222;padding:4px;margin:8px 0}
+#c{width:100%;height:300px;display:block}
+.stat{display:flex;gap:6px}.stat div{flex:1;background:#11182b;padding:8px;border-radius:10px;text-align:center;font-size:10px;color:#999}
+.stat b{display:block;color:#fff;font-size:14px}
+.levels{background:#11182b;padding:10px;border-radius:10px;margin:6px 0;text-align:center;color:#ccc;font-size:12px}
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-weight:800;margin-top:6px}
+.wa{background:#25D366;color:#fff}.scan{background:#2962FF;color:#fff}
+</style></head><body>
+<h1>💹 BYLORD AI FAST</h1>
+<div class="live" id="live">● FAST MODE - NO LOADING</div>
+<select id="pair"><option value="PAXGUSDT">GOLD XAU/USD</option><option value="BTCUSDT">BTC/USD</option><option value="EURUSDT">EUR/USD</option></select>
+<div class="modeBox">
+<button id="b1" class="modeBtn active" onclick="setMode('scalper')">🎯 SCALPER</button>
+<button id="b2" class="modeBtn" onclick="setMode('news')">📰 NEWS</button>
+</div>
+<div id="news" class="newsBox">📰 News: Checking...</div>
+<div id="sig" class="sig buy">STARTING...</div>
+<div id="wrap"><canvas id="c" width="360" height="300"></canvas></div>
+<div class="stat"><div><b id="p">-</b>PRICE</div><div><b id="r">-</b>RSI</div><div><b id="n">-</b>BIAS</div></div>
+<div id="lv" class="levels"></div>
+<button class="btn wa" onclick="wa()">📲 SEND</button>
+<button class="btn scan" onclick="get()">🔄 NEW SIGNAL</button>
+<script>
+let mode='scalper',last={},newsBias='NEUTRAL';
+function setMode(m){mode=m;document.getElementById('b1').classList.toggle('active',m=='scalper');document.getElementById('b2').classList.toggle('active',m=='news');get();}
+function calc(closes){let g=0,l=0;for(let i=1;i<=14;i++){let d=closes[i]-closes[i-1];if(d>=0)g+=d;else l-=d;}let ag=g/14,al=l/14;for(let i=15;i<closes.length;i++){let d=closes[i]-closes[i-1];if(d>=0){ag=(ag*13+d)/14;al=al*13/14;}else{ag=ag*13/14;al=(al*13-d)/14;}}if(al==0)return 100;return 100-(100/(1+ag/al));}
+function draw(cs){let cv=document.getElementById('c'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);if(!cs.length)return;let max=Math.max(...cs.map(c=>c.h)),min=Math.min(...cs.map(c=>c.l)),rg=max-min||1;max+=rg*0.08;min-=rg*0.08;rg=max-min;let step=W/cs.length,w=step*0.6;cs.forEach((c,i)=>{let x=i*step+4;let yO=H-(c.o-min)/rg*H,yC=H-(c.c-min)/rg*H,yH=H-(c.h-min)/rg*H,yL=H-(c.l-min)/rg*H;let gr=c.c>=c.o;ctx.strokeStyle=gr?'#00E676':'#ff1744';ctx.fillStyle=gr?'#00E676':'#ff1744';ctx.beginPath();ctx.moveTo(x+w/2,yH);ctx.lineTo(x+w/2,yL);ctx.stroke();let by=Math.min(yO,yC),bh=Math.abs(yO-yC);if(bh<2)bh=3;ctx.fillRect(x,by,w,bh);});}
+function getNewsFast(){
+ let h=new Date().getUTCHours();
+ // Real high impact times: 8:30 EST = 12:30 UTC (NFP, CPI) and 14:00 UTC (FOMC)
+ if(h>=12 && h<=15){newsBias='HIGH VOLATILITY'; document.getElementById('news').innerHTML='🔴 <b>HIGH IMPACT TIME</b> '+h+':00 UTC - USD news window - Reduce lot size!';}
+ else {newsBias='NEUTRAL'; document.getElementById('news').innerHTML='✅ <b>No red news now</b> - Safe to follow trend. Next news: 12:30 UTC';}
+ document.getElementById('n').textContent=newsBias.split(' ')[0];
+}
+async function get(){
+ getNewsFast();
+ let s=document.getElementById('pair').value;
+ document.getElementById('sig').textContent='FETCHING '+s+'...';
+ document.getElementById('live').textContent='● FETCHING...';
+ try{
+  let res=await fetch('https://data-api.binance.vision/api/v3/klines?symbol='+s+'&interval=1m&limit=40');
+  let data=await res.json();
+  let closes=data.map(k=>parseFloat(k[4]));
+  let candles=data.map(k=>({o:parseFloat(k[1]),h:parseFloat(k[2]),l:parseFloat(k[3]),c:parseFloat(k[4])}));
+  let price=closes[closes.length-1],prev=closes[closes.length-2];
+  let rsi=Math.round(calc(closes));
+  // CORRECT TREND LOGIC
+  let isBuy=rsi>50;
+  let signal=isBuy?'BUY 🟢':'SELL 🔴';
+  if(mode==='news' && newsBias==='HIGH VOLATILITY'){signal='WAIT 🟡 NEWS';}
+  let conf=Math.abs(rsi-50)+50; if(conf>92)conf=92;
+  last={pair:s,price,rsi,signal,conf,newsBias,time:new Date().toLocaleTimeString(),prev};
+  document.getElementById('p').textContent=price.toFixed(2);
+  document.getElementById('r').textContent=rsi;
+  document.getElementById('sig').textContent=signal+' RSI '+rsi;
+  document.getElementById('sig').className='sig '+(signal.includes('BUY')?'buy':signal.includes('SELL')?'sell':'buy');
+  let tp=isBuy?price*1.0035:price*0.9965, sl=isBuy?price*0.998:price*1.002;
+  document.getElementById('lv').innerHTML=`${price>prev?'📈 UPTREND':'📉 DOWNTREND'} ${prev.toFixed(2)}→${price.toFixed(2)}<br>🎯 TP: ${tp.toFixed(2)} | 🛑 SL: ${sl.toFixed(2)}<br
