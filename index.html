@@ -1,0 +1,71 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BYLORD FIXED PAINT</title><style>body{background:#0a122c;color:#fff;font-family:Arial;margin:0;padding:10px}#wrap{background:#000;border-radius:18px;border:1px solid #222;padding:6px;margin:8px 0;height:380px}canvas{width:100%;height:100%;display:block}.row{display:flex;gap:6px}.row div{flex:1;background:#141b33;padding:10px;border-radius:12px;text-align:center}.demo{background:#101a33;border:1px solid #00E676;padding:10px;border-radius:12px}</style></head><body>
+<div style="display:flex;gap:6px"><button style="flex:1;padding:10px;border-radius:20px;background:#00E676;color:#000;font-weight:900">SCALPER</button><button style="flex:1;padding:10px;border-radius:20px;background:#141d38;color:#888">SNIPER</button><button style="flex:1;padding:10px;border-radius:20px;background:#141d38;color:#888">BARCHART</button></div>
+<div id="sig" style="padding:16px;border-radius:16px;text-align:center;font-weight:900;font-size:20px;margin:8px 0;background:#00E676;color:#000">BUY 🟢 RSI 58 | 88% CONF</div>
+<div id="wrap"><canvas id="c"></canvas></div>
+<div class="row"><div><b id="p">4471.63</b><br><span style="font-size:8px;color:#888">PRICE</span></div><div><b>58</b><br><span style="font-size:8px;color:#888">RSI</span></div><div><b>88%</b><br><span style="font-size:8px;color:#888">CONF</span></div><div><b id="bal">$10000</b><br><span style="font-size:8px;color:#888">DEMO BAL</span></div></div>
+<div class="demo"><b>💰 DEMO: $<span id="dBal">10000</span> | P/L: $<span id="dPL">0</span> | PROFITABLE TRADES</b><div id="trades"></div></div>
+<script>
+let demo={bal:10000,pl:0,trades:[],pos:null},ca=[];
+function gen(){
+ca=[];let b=4499.45;
+for(let i=0;i<50;i++){
+let o=b+(Math.random()-0.6)*1.5;
+let c=o+(Math.random()-0.55)*2;
+let h=Math.max(o,c)+Math.random()*0.8;
+let l=Math.min(o,c)-Math.random()*0.8;
+ca.push({o,h,l,c});b=c;
+}
+}
+function drawChart(){
+let cv=document.getElementById('c');
+let ctx=cv.getContext('2d');
+let W=cv.width=cv.offsetWidth*2;
+let H=cv.height=cv.offsetHeight*2;
+ctx.scale(2,2);W=W/2;H=H/2;
+ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+let entry=4499.45,tp=4471.63,sl=4505;
+let mx=Math.max(...ca.map(x=>x.h),sl),mn=Math.min(...ca.map(x=>x.l),tp);
+let rg=mx-mn;mx+=rg*0.1;mn-=rg*0.1;rg=mx-mn;
+let yP=p=>H-(p-mn)/rg*H;
+// GREEN PROFIT ZONE LIKE YOUR SCREENSHOT
+ctx.fillStyle='rgba(0,230,118,0.30)';
+ctx.fillRect(W*0.48,yP(entry),W*0.52,yP(tp)-yP(entry));
+// RED STOP LOSS
+ctx.fillStyle='rgba(255,23,68,0.30)';
+ctx.fillRect(W*0.48,yP(sl),W*0.52,yP(entry)-yP(sl));
+// Lines
+ctx.setLineDash([4][3]);ctx.strokeStyle='#ff8a00';ctx.beginPath();ctx.moveTo(0,yP(entry));ctx.lineTo(W,yP(entry));ctx.stroke();
+ctx.strokeStyle='#00E676';ctx.beginPath();ctx.moveTo(0,yP(tp));ctx.lineTo(W,yP(tp));ctx.stroke();
+ctx.strokeStyle='#ff1744';ctx.beginPath();ctx.moveTo(0,yP(sl));ctx.lineTo(W,yP(sl));ctx.stroke();ctx.setLineDash([]);
+// Labels like image
+ctx.fillStyle='#ff6d00';ctx.fillRect(W-110,yP(entry)-12,110,14);ctx.fillStyle='#fff';ctx.font='bold 10px Arial';ctx.fillText('SHORT 4499.45',W-105,yP(entry)-2);
+ctx.fillStyle='#00E676';ctx.fillRect(W-90,yP(tp)-12,90,14);ctx.fillStyle='#000';ctx.fillText('TP 4471.63',W-85,yP(tp)-2);
+ctx.fillStyle='#ff1744';ctx.fillRect(W-105,yP(sl)-12,105,14);ctx.fillStyle='#fff';ctx.fillText('STOP LOSS',W-100,yP(sl)-2);
+// Candles
+let st=W/ca.length,w=st*0.6;
+ca.forEach((c,i)=>{
+let x=i*st+2;
+let yO=yP(c.o),yC=yP(c.c),yH=yP(c.h),yL=yP(c.l);
+let gr=c.c>=c.o;
+ctx.strokeStyle=gr?'#00E676':'#ff1744';ctx.fillStyle=gr?'#00E676':'#ff1744';
+ctx.beginPath();ctx.moveTo(x+w/2,yH);ctx.lineTo(x+w/2,yL);ctx.stroke();
+let by=Math.min(yO,yC),bh=Math.abs(yO-yC);if(bh<2)bh=2;
+ctx.fillRect(x,by,w,bh);
+});
+}
+function addTrade(){
+if(demo.trades.length>=6)return;
+let pnl=27.82+Math.random()*50;
+demo.bal+=pnl;demo.pl+=pnl;
+demo.trades.push({pnl});
+document.getElementById('dBal').textContent=demo.bal.toFixed(2);
+document.getElementById('dPL').textContent=demo.pl.toFixed(2);
+document.getElementById('bal').textContent='$'+demo.bal.toFixed(0);
+let h='';demo.trades.slice(-4).reverse().forEach(t=>{
+h+=`<div style="padding:6px;background:#0d152e;margin:4px 0;border-left:3px solid #00E676;border-radius:6px;font-size:11px">SHORT 4499.45 → 4471.63 | <b style="color:#00E676">+$${t.pnl.toFixed(2)} 🟢</b></div>`;
+});
+document.getElementById('trades').innerHTML=h;
+}
+gen();drawChart();addTrade();
+setInterval(()=>{gen();drawChart();if(Math.random()>0.6)addTrade();},2000);
+</script></body></html>
