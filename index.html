@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BYLORD AI - PRICE + CANDLES + NEWS</title>
+<style>
+body{background:#070c1a;color:#fff;font-family:Arial;padding:10px;margin:0}
+h1{text-align:center;font-size:20px;margin:6px}
+.live{color:#00E676;text-align:center;font-size:10px;border:1px solid #00E676;padding:5px;border-radius:20px;margin:5px auto;max-width:360px}
+select{width:100%;padding:12px;background:#151b30;color:#fff;border-radius:10px;border:1px solid #2a3555;margin-bottom:8px}
+.modeBox{display:flex;gap:6px;margin:8px 0}
+.modeBtn{flex:1;padding:10px;border-radius:10px;border:2px solid #333;background:#1a1f35;color:#888;font-weight:800;font-size:11px}
+.modeBtn.active{border-color:#00E676;color:#00E676;background:#0a1f14}
+.sig{padding:16px;border-radius:14px;font-size:24px;font-weight:900;text-align:center;margin:8px 0}
+.buy{background:#00E676;color:#000}.sell{background:#ff1744;color:#fff}
+.newsBox{background:#1a1200;border:1px solid #ffaa00;border-radius:12px;padding:10px;margin:8px 0;font-size:12px}
+.newsBull{color:#00E676;font-weight:800}.newsBear{color:#ff1744;font-weight:800}.newsNeutral{color:#ffaa00;font-weight:800}
+#wrap{background:#000;border-radius:12px;border:1px solid #222;padding:4px;margin:8px 0}
+#c{width:100%;height:300px;display:block}
+.stat{display:flex;gap:6px}
+.stat div{flex:1;background:#11182b;padding:8px;border-radius:10px;text-align:center;font-size:10px;color:#999}
+.stat b{display:block;color:#fff;font-size:14px}
+.levels{background:#11182b;padding:10px;border-radius:10px;margin:6px 0;text-align:center;color:#ccc;font-size:12px}
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-weight:800;margin-top:6px}
+.wa{background:#25D366;color:#fff}.scan{background:#2962FF;color:#fff}
+</style></head><body>
+<h1>💹 BYLORD AI + NEWS</h1>
+<div class="live" id="live">● LIVE + NEWS FILTER</div>
+
+<select id="pair" onchange="get()"><option value="PAXGUSDT">GOLD XAU/USD</option><option value="BTCUSDT">BTC/USD</option><option value="EURUSDT">EUR/USD</option><option value="GBPUSDT">GBP/USD</option></select>
+
+<div class="modeBox">
+<button id="b1" class="modeBtn active" onclick="setMode('scalper')">🎯 SCALPER</button>
+<button id="b2" class="modeBtn" onclick="setMode('news')">📰 NEWS MODE</button>
+<button id="b3" class="modeBtn" onclick="setMode('sniper')">🛡️ SNIPER</button>
+</div>
+
+<div id="news" class="newsBox">📰 Checking high-impact USD/Gold news...</div>
+
+<div id="sig" class="sig buy">Loading...</div>
+<div id="wrap"><canvas id="c" width="360" height="300"></canvas></
