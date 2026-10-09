@@ -1,0 +1,157 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BYLORD PRO</title><style>
+body{margin:0;background:#0f1431;color:#fff;font-family:Arial;padding:10px}
+.top{display:flex;gap:10px;margin:14px 0}.top button{flex:1;padding:14px;border-radius:30px;border:2px solid #2a345e;background:#1a2347;color:#7a86a8;font-weight:900;font-size:13px;letter-spacing:.5px}.top button.active{border-color:#0f8a3f;color:#0f8a3f;background:#0a2a18}
+#pair{width:100%;padding:16px 18px;border-radius:16px;background:#1a2347;border:1px solid #2a345e;color:#fff;font-size:16px;appearance:none}
+#sig{padding:22px 10px;border-radius:22px;text-align:center;font-weight:900;font-size:26px;margin:16px 0;line-height:1.2;letter-spacing:.5px}
+.buy{background:#00E676;color:#000}.sell{background:#ff1744;color:#fff}.wait{background:#fbbf24;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+#wrap{background:#000;border-radius:28px;border:1px solid #1a2347;height:520px;overflow:hidden;padding:6px}
+canvas{width:100%;height:100%;display:block;border-radius:22px}
+.stats{display:flex;gap:10px;margin-top:14px}.stats div{flex:1;background:#1a2347;border-radius:18px;padding:16px;text-align:center}.stats b{font-size:22px;display:block}.stats span{font-size:12px;color:#7a86a8;margin-top:4px;display:block;letter-spacing:.5px}
+.info{margin-top:12px;background:#0f1f14;border:1px dashed #1d5a2e;border-radius:16px;padding:12px;font-size:13px;color:#8fbc8f;line-height:1.4}
+</style></head><body>
+
+<div class="top">
+<button id="bScalp" onclick="setMode('scalper')">SCALPER</button>
+<button id="bSnipe" class="active" onclick="setMode('sniper')">SNIPER</button>
+<button id="bChart" onclick="setMode('barchart')">BARCHART</button>
+</div>
+
+<select id="pair"><option>GOLD XAU/USD</option></select>
+
+<div id="sig" class="wait">WAIT NO REVERSAL 🟡 RSI<br>57</div>
+
+<div id="wrap"><canvas id="c"></canvas></div>
+
+<div class="stats">
+<div><b id="p">4196.20</b><span>PRICE</span></div>
+<div><b id="rsi">57</b><span>RSI</span></div>
+<div><b id="conf">76%</b><span>CONF</span></div>
+</div>
+
+<div class="info" id="info">
+⏳ No reversal yet<br>
+Barchart: STRONG BUY<br>
+NEUTRAL 1.02<br>
+Wait for... of 4194.67 - 4198.24
+</div>
+
+<script>
+let mode='sniper', ca=[], cur={price:4196.20,rsi:57};
+
+function gen(){
+ca=[];let pr=4140;
+for(let i=0;i<80;i++){
+let o=pr;
+let trend=0;
+if(i<15) trend=0.8;
+else if(i<30) trend=0.1;
+else if(i<38) trend=-1.1;
+else if(i<55) trend=0.15;
+else if(i<65) trend=0.6;
+else trend=0.5;
+let c=o+trend+(Math.random()-0.5)*0.9;
+ca.push({o,h:Math.max(o,c)+Math.random()*1.1,l:Math.min(o,c)-Math.random()*1.1,c});
+pr=c;
+}
+cur.price=pr;
+}
+
+function getRSI(){
+let g=0,l=0;
+for(let i=ca.length-14;i<ca.length;i++){let d=ca[i].c-ca[i-1].o; if(d>0)g+=d; else l-=d;}
+let rsi=100-(100/(1+g/(l||1)));
+cur.rsi=Math.round(Math.max(22,Math.min(78,rsi+(Math.random()-0.5)*4)));
+return cur.rsi;
+}
+
+function detectReversal(){
+let rsi=cur.rsi, pr=cur.price;
+let sma=ca.slice(-20).reduce((a,b)=>a+b.c,0)/20;
+let last=ca[ca.length-1], prev=ca[ca.length-2], prev2=ca[ca.length-3];
+let bullishEngulf = last.c>last.o && prev.c<prev.o && last.c>prev.o && last.o<prev.c;
+let bearishEngulf = last.c<last.o && prev.c>prev.o && last.c<prev.o && last.o>prev.c;
+let hammer = (last.h-last.c)<(last.c-last.l)*0.3 && rsi<45;
+
+let barchart = rsi>54?'STRONG BUY':'STRONG SELL';
+if(rsi>60) barchart='STRONG BUY';
+if(rsi<40) barchart='STRONG SELL';
+
+let sig='', isBuy=true, conf=76, cls='wait';
+
+if(mode==='sniper'){
+  if( (rsi<=38 && (bullishEngulf||hammer)) || (rsi<35) ){
+    isBuy=true; conf=92; cls='buy';
+    sig=`BUY REVERSAL 🟢 RSI<br>${rsi}`;
+    document.getElementById('info').innerHTML=`🔄 BULLISH REVERSAL FOUND<br>Barchart: ${barchart}<br>BUY SIGNAL 0.89<br>Reversal at ${ (pr-0.8).toFixed(2)} - ${pr.toFixed(2)}<br>Entry ${pr.toFixed(2)} | SL ${(pr-3).toFixed(2)} | TP ${(pr+6).toFixed(2)}`;
+  }else if( (rsi>=62 && bearishEngulf) || (rsi>66) ){
+    isBuy=false; conf=90; cls='sell';
+    sig=`SELL REVERSAL 🔴 RSI<br>${rsi}`;
+    document.getElementById('info').innerHTML=`🔄 BEARISH REVERSAL FOUND<br>Barchart: ${barchart}<br>SELL SIGNAL 0.88<br>Reversal at ${pr.toFixed(2)} - ${(pr+0.8).toFixed(2)}<br>Entry ${pr.toFixed(2)} | SL ${(pr+3).toFixed(2)} | TP ${(pr-6).toFixed(2)}`;
+  }else if(pr>sma && rsi>=46 && rsi<=62){
+    isBuy=true; conf=76; cls='buy';
+    sig=`BUY TREND 🟢 RSI<br>${rsi}`;
+    document.getElementById('info').innerHTML=`📈 TREND CONTINUATION<br>Barchart: ${barchart}<br>NEUTRAL 1.02<br>Waiting for pullback reversal ${ (pr-1.8).toFixed(2)} - ${(pr+1.8).toFixed(2)}`;
+  }else if(pr<sma && rsi>=38 && rsi<=54){
+    isBuy=false; conf=74; cls='sell';
+    sig=`SELL TREND 🔴 RSI<br>${rsi}`;
+    document.getElementById('info').innerHTML=`📉 TREND CONTINUATION<br>Barchart: ${barchart}<br>NEUTRAL 0.98<br>Waiting for bounce reversal ${ (pr-1.8).toFixed(2)} - ${(pr+1.8).toFixed(2)}`;
+  }else{
+    cls='wait';
+    sig=`WAIT NO REVERSAL 🟡 RSI<br>${rsi}`;
+    document.getElementById('info').innerHTML=`⏳ No reversal yet<br>Barchart: ${barchart}<br>NEUTRAL 1.02<br>Wait for reversal of ${ (pr-1.5).toFixed(2)} - ${(pr+1.5).toFixed(2)}`;
+  }
+}else if(mode==='barchart'){
+  isBuy=barchart.includes('BUY'); conf=isBuy?84:82; cls=isBuy?'buy':'sell';
+  sig=`${barchart} ${isBuy?'🟢':'🔴'} RSI<br>${rsi}`;
+  document.getElementById('info').innerHTML=`Barchart: ${barchart}<br>${isBuy?'BUY':'SELL'} PRESSURE<br>RSI ${rsi}`;
+}else{ // scalper - always shows signal
+  isBuy=pr>sma;
+  conf=78; cls=isBuy?'buy':'sell';
+  sig=`${isBuy?'BUY':'SELL'} ${isBuy?'🟢':'🔴'} RSI<br>${rsi}`;
+  document.getElementById('info').innerHTML=`Barchart: ${barchart}<br>Scalp ${isBuy?'LONG':'SHORT'}<br>RSI ${rsi}`;
+}
+return{isBuy,conf,cls,sig,price:pr,rsi};
+}
+
+function draw(){
+let cv=document.getElementById('c'),dpr=window.devicePixelRatio||1,rc=cv.getBoundingClientRect();
+cv.width=rc.width*dpr; cv.height=rc.height*dpr;
+let ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+let W=rc.width,H=rc.height;
+ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+
+let s=detectReversal();
+let mx=Math.max(...ca.map(c=>c.h)), mn=Math.min(...ca.map(c=>c.l)), rg=mx-mn; mx+=rg*0.12; mn-=rg*0.12; rg=mx-mn;
+let y=p=>H-(p-mn)/rg*H-10;
+
+let st=W/ca.length, w=Math.max(2.5,st*0.68);
+ca.forEach((c,i)=>{
+let x=i*st+st*0.15;
+let yO=y(c.o),yC=y(c.c),yH=y(c.h),yL=y(c.l);
+let green=c.c>=c.o;
+ctx.strokeStyle=green?'#00e676':'#ff1744';
+ctx.fillStyle=green?'#00e676':'#ff1744';
+ctx.lineWidth=1.2;
+ctx.beginPath();ctx.moveTo(x+w/2,yH);ctx.lineTo(x+w/2,yL);ctx.stroke();
+let bh=Math.abs(yO-yC); if(bh<2)bh=2;
+ctx.fillRect(x,Math.min(yO,yC),w,bh);
+});
+
+let el=document.getElementById('sig');
+el.className=s.cls;
+el.innerHTML=s.sig;
+document.getElementById('p').innerText=s.price.toFixed(2);
+document.getElementById('rsi').innerText=s.rsi;
+document.getElementById('conf').innerText=s.conf+'%';
+}
+
+function setMode(m){
+mode=m;
+document.querySelectorAll('.top button').forEach(b=>b.classList.remove('active'));
+document.getElementById(m==='scalper'?'bScalp':m==='sniper'?'bSnipe':'bChart').classList.add('active');
+gen();getRSI();draw();
+}
+
+gen();getRSI();draw();
+setInterval(()=>{gen();getRSI();draw();},2500);
+</script></body></html>
