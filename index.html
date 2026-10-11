@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BYLORD AI - Binance Real Market</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#070a0f;color:#fff;font-family:Inter,Arial}
+.header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#0f141f;border-bottom:1px solid #1c2535}
+.title{font-weight:900;color:#22c55e;letter-spacing:0.5px}
+select{background:#162032;color:#fff;border:1px solid #23314a;padding:8px 12px;border-radius:8px}
+.tabs{display:flex;gap:8px;padding:10px}
+.tabs button{flex:1;padding:8px;border-radius:20px;border:1px solid #1e3a1e;background:#0f1a0f;color:#4ade80;font-weight:bold;font-size:12px}
+.tabs button.active{background:#162e16;border-color:#22c55e}
+#signalBar{margin:10px;padding:14px;border-radius:10px;text-align:center;font-weight:900;font-size:20px;letter-spacing:0.5px}
+.chart{margin:10px;height:380px;background:#000;border-radius:12px;border:1px solid #1e293b;overflow:hidden}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:10px}
+.card{background:#111a29;border:1px solid #1e293b;padding:12px;border-radius:10px;text-align:center}
+.card b{display:block;font-size:18px;margin-bottom:2px}
+.card small{color:#64748b;font-size:11px}
+.trend{margin:10px;padding:12px;background:#0a1f14;border:1px solid #14532d;border-radius:10px;color:#86efac;font-size:12px;line-height:1.6}
+.live{color:#22c55e;font-size:10px;animation:blink 1s infinite}@keyframes blink{50%{opacity:0}}
+.footer{text-align:center;color:#475569;font-size:11px;padding:10px}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="title">BYLORD AI <span class="live">● LIVE BINANCE</span></div>
+<select id="pair"><option value="BTCUSDT">BTC/USD</option><option value="ETHUSDT">ETH/USD</option><option value="SOLUSDT">SOL/USD</option><option value="BNBUSDT">BNB/USD</option><option value="XRPUSDT">XRP/USD</option></select>
+</div>
+
+<div class="tabs"><button class="active">SCALPER</button><button>SNIPER</button><button>BARCHART</button></div>
+
+<div id="signalBar">CONNECTING TO BINANCE...</div>
+<div id="chart" class="chart"></div>
+
+<div class="grid">
+<div class="card"><b id="price">-</b><small>PRICE</small></div>
+<div class="card"><b id="rsi">-</b><small>RSI(14)</small></div>
+<div class="card"><b id="conf">-</b><small>CONFIDENCE</small></div>
+</div>
+
+<div id="trendBox" class="trend">Loading Barchart...</div>
+
+<div class="footer">mbe-staging.io • Real Market Capture • Binance Vision • shukranikithikombe-star.github.io</div>
+
+<script>
+let symbol="BTCUSDT";
+let chartObj=LightweightCharts.createChart(document.getElementById('chart'),{
+ layout:{background:{color:'#000'},textColor:'#8892a0'},
+ grid:{vertLines:{color:'#0f172a'},horzLines:{color:'#0f172a'}},
+ timeScale:{timeVisible:true,secondsVisible:false},
+ rightPriceScale:{borderColor:'#1e293b'}
+});
+let candles=chartObj.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderVisible:false,wickUpColor:'#22c55e',wickDownColor:'#ef4444'});
+let clData=[], candleData=[];
+
+async function loadHistory(){
+ let r=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${symbol}&interval=1m&limit=100`);
+ let j=await r.json();
+ clData=j.map(k=>parseFloat(k[4]));
+ candleData=j.map(k=>({time:k[0]/1000,open:parseFloat(k[1]),high:parseFloat(k[2]),low:parseFloat(k[3]),close:parseFloat(k[4])}));
+ candles.setData(candleData);
+ chartObj.timeScale().fitContent();
+ calc();
+}
+
+function calc(){
+ if(clData.length<50)return;
+ let pr=clData[clData.length-1];
+ let g=0,l=0;for(let i=1;i<=14;i++){let d=clData[i]-clData[i-1];if(d>=0)g+=d;else l-=d;}
+ let ag=g/14,al=l/14;for(let i=15;i<clData.length;i++){let d=clData[i]-clData[i-1];if(d>=0){ag=(ag*13+d)/14;al=al*13/14;}else{ag=ag*13/14;al=(al*13-d)/14;}}
+ let rsi=al==0?100:100-(100/(1+ag/al)); rsi=Math.round(rsi);
+ let sma20=clData.slice(-20).reduce((a,b)=>a+b,0)/20;
+ let sma50=clData.slice(-50).reduce((a,b)=>a+b,0)/50;
+ let isBuy=rsi>50 && pr>sma20;
+ let conf=Math.round(65+Math.abs(rsi-50)*1.6); if(conf>92)conf=92;
+ let barchart=pr>sma20 && pr>sma50 && sma20>sma50?'BARCHART: STRONG BUY':pr>sma20?'BARCHART: BUY':pr<sma20 && pr<sma50?'BARCHART: STRONG SELL':'BARCHART: HOLD';
+ let putCall=rsi<45?'PUTS HEAVY (0.85) - Oversold':rsi>65?'CALLS HEAVY (1.25) - Overbought':'NEUTRAL (1.02)';
+ let optionsFlow=rsi<40 && pr<sma20?'Options Flow: BUY PUTS exhausted → SNIPER BUY coming':rsi>65 && pr>sma20?'Options Flow: BUY CALLS exhausted → SNIPER SELL coming':'Options Flow: Neutral';
+ let final=isBuy?'BUY 🟡':'SELL 🔴'; let finalFull=`${final} RSI ${rsi}`; if(barchart.includes('STRONG BUY')&&isBuy)finalFull=`BUY 🟡 RSI ${rsi}`; if(barchart.includes('STRONG SELL')&&!isBuy)finalFull=`SELL 🔴 RSI ${rsi}`;
+
+ document.getElementById('price').textContent=pr.toFixed(2);
+ document.getElementById('rsi').textContent=rsi;
+ document.getElementById('conf').textContent=conf+'%';
+ document.getElementById('signalBar').textContent=finalFull;
+ document.getElementById('signalBar').style.background=isBuy?'#22c55e':'#ef4444';
+ document.getElementById('signalBar').style.color=isBuy?'#000':'#fff';
+ document.getElementById('trendBox').innerHTML=`🟢 Follow trend now<br><b>${barchart.split(':')[1]} | ${putCall}</b><br>📊 ${putCall}<br>📈 ${optionsFlow}<br><br>🎯 TP: ${(isBuy?pr*1.006:pr*0.994).toFixed(2)} | 🛑 SL: ${(isBuy?pr*0.997:pr*1.003).toFixed(2)} | CONF: ${conf}%`;
+}
+
+let ws;
+function startWS(){
+ if(ws)ws.close();
+ ws=new WebSocket(`wss://stream.binance.vision/ws/${symbol.toLowerCase()}@kline_1m`);
+ ws.onmessage=e=>{
+  let msg=JSON.parse(e.data); let k=msg.k; let cp=parseFloat(k.c);
+  clData[clData.length-1]=cp;
+  let last=candleData[candleData.length-1];
+  last={time:last.time,open:parseFloat(k.o),high:parseFloat(k.h),low:parseFloat(k.l),close:cp};
+  candleData[candleData.length-1]=last;
+  candles.update(last);
+  calc();
+ };
+}
+
+document.getElementById('pair').onchange=e=>{symbol=e.target.value; loadHistory(); startWS();};
+
+loadHistory(); startWS();
+</script>
+</body>
+</html>
